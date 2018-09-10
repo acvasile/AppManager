@@ -1,7 +1,5 @@
 package com.acvasile;
 
-import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -16,6 +14,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -54,25 +54,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         @Override
         public void onClick(View v)
         {
-            Log.i("ITEM_ADAPTER", "onClickListener");
-
-            ActivityManager activityManager = (ActivityManager)context.getSystemService(Activity.ACTIVITY_SERVICE);
-            // Failed to obtain the activity manager
-            if (activityManager == null) { return; }
-
-            try
-            {
-                activityManager.killBackgroundProcesses(applicationInfo.packageName);
-            }
-            catch (Exception ex)
-            {
-                Log.e("HolderOnClock", "Could not kill packageName: " + applicationInfo.packageName);
-                Log.e("HolderOnClock", "Kill failed with: " + ex.getMessage());
-
-                Toast.makeText(context, "Failed to kill: " + applicationInfo.packageName,
-                        Toast.LENGTH_LONG).show();
-                return;
-            }
+            AppManager.forceStopPackages(
+                    new ArrayList<>(Arrays.asList(applicationInfo.packageName)));
 
             Log.e("HolderOnClock", "Killed: " + applicationInfo.packageName);
             Toast.makeText(context, "killed: " + applicationInfo.packageName,
