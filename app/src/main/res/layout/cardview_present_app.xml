@@ -15,7 +15,7 @@
         android:id="@+id/item_icon"
         android:layout_width="@dimen/app_image_size"
         android:layout_height="@dimen/app_image_size"
-        android:layout_margin="@dimen/item_margin"
+        android:layout_margin="@dimen/app_image_margin"
         android:scaleType="fitCenter" />
 
     <LinearLayout
@@ -23,7 +23,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Improve text compatibility on newer devices by using start margin -->
+        <!-- Improve text compatibility by using start margin -->
         <TextView
             android:id="@+id/primary_title_id"
             android:layout_width="match_parent"
@@ -40,8 +40,8 @@
             android:id="@+id/secondary_title_id"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginStart="@dimen/app_title_left_margin"
             android:layout_marginLeft="@dimen/app_title_left_margin"
+            android:layout_marginStart="@dimen/app_title_left_margin"
             android:gravity="center|start|top"
             android:text="@string/sample_title"
             android:textColor="@color/secondaryTextColor"

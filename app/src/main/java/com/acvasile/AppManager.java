@@ -30,6 +30,9 @@ public class AppManager
         {
             return packageList.stream()
                     .filter(item -> packageManager.getLaunchIntentForPackage(item.packageName) != null)
+                    // Sort package by label name with no case sensitive
+                    .sorted((o1, o2) -> o1.loadLabel(packageManager).toString().toLowerCase()
+                            .compareTo(o2.loadLabel(packageManager).toString().toLowerCase()))
                     .collect(Collectors.toList());
         }
 
