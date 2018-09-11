@@ -55,30 +55,6 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         }
     }
 
-    private class CardViewOnClick implements View.OnClickListener
-    {
-        private Context context;
-        private ApplicationInfo applicationInfo;
-
-
-        CardViewOnClick(Context context, ApplicationInfo applicationInfo)
-        {
-            this.context = context;
-            this.applicationInfo = applicationInfo;
-        }
-
-        @Override
-        public void onClick(View v)
-        {
-            AppManager.forceStopPackages(
-                    new ArrayList<>(Arrays.asList(applicationInfo.packageName)));
-
-            Log.e("HolderOnClock", "Killed: " + applicationInfo.packageName);
-            Toast.makeText(context, "killed: " + applicationInfo.packageName,
-                    Toast.LENGTH_LONG).show();
-        }
-    }
-
     private Context context;
     private PackageManager packageManager;
     private List<InternalData> data;
@@ -136,7 +112,15 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         holder.switchCompat.setChecked(internalData.active);
         holder.switchCompat.setOnClickListener(view -> internalData.active = !internalData.active);
 
-        holder.cardView.setOnClickListener(new CardViewOnClick(context, internalData.applicationInfo));
+        holder.cardView.setOnClickListener(view ->
+        {
+            AppManager.forceStopPackages(
+                    new ArrayList<>(Arrays.asList(internalData.applicationInfo.packageName)));
+
+            Log.e("HolderOnClock", "Killed: " + internalData.applicationInfo.packageName);
+            Toast.makeText(context, "killed: " + internalData.applicationInfo.packageName,
+                    Toast.LENGTH_LONG).show();
+        });
     }
 
     @Override
