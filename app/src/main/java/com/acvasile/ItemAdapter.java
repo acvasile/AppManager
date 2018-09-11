@@ -3,9 +3,11 @@ package com.acvasile;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +28,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         TextView primaryTitle;
         TextView secondaryTitle;
         ImageView itemIcon;
+        SwitchCompat switchCompat;
         CardView cardView;
 
         ItemViewHolder(View itemView)
@@ -35,17 +38,30 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             primaryTitle = itemView.findViewById(R.id.primary_title_id);
             secondaryTitle = itemView.findViewById(R.id.secondary_title_id);
             itemIcon = itemView.findViewById(R.id.item_icon);
+            switchCompat = itemView.findViewById(R.id.on_off_switch);
             cardView = itemView.findViewById(R.id.cardview_id);
         }
     }
 
-    private class HolderOnClick implements View.OnClickListener
+    private class InternalData
+    {
+        ApplicationInfo applicationInfo;
+        boolean active;
+
+        InternalData(ApplicationInfo applicationInfo, boolean active)
+        {
+            this.applicationInfo = applicationInfo;
+            this.active = active;
+        }
+    }
+
+    private class CardViewOnClick implements View.OnClickListener
     {
         private Context context;
         private ApplicationInfo applicationInfo;
 
 
-        HolderOnClick(Context context, ApplicationInfo applicationInfo)
+        CardViewOnClick(Context context, ApplicationInfo applicationInfo)
         {
             this.context = context;
             this.applicationInfo = applicationInfo;
@@ -65,12 +81,26 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
     private Context context;
     private PackageManager packageManager;
-    private List<ApplicationInfo> data;
+    private List<InternalData> data;
 
     ItemAdapter(Context mContext, List<ApplicationInfo> mData)
     {
         this.context = mContext;
-        this.data = mData;
+
+        data = new ArrayList<>(mData.size());
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+        {
+            mData.forEach(applicationInfo ->
+                    data.add(new InternalData(applicationInfo, false)));
+        }
+        else
+        {
+            for (ApplicationInfo applicationInfo : mData)
+            {
+                data.add(new InternalData(applicationInfo, false));
+            }
+        }
+
         this.packageManager = context.getPackageManager();
     }
 
@@ -88,10 +118,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     {
         position = holder.getAdapterPosition();
 
-        ApplicationInfo applicationInfo;
+        InternalData internalData;
         try
         {
-            applicationInfo = data.get(position);
+            internalData = data.get(position);
         }
         catch (IndexOutOfBoundsException ex)
         {
@@ -99,11 +129,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             return;
         }
 
-        holder.primaryTitle.setText(applicationInfo.loadLabel(packageManager));
-        holder.secondaryTitle.setText(applicationInfo.loadDescription(packageManager));
-        holder.itemIcon.setImageDrawable(applicationInfo.loadIcon(packageManager));
+        holder.primaryTitle.setText(internalData.applicationInfo.loadLabel(packageManager));
+        holder.secondaryTitle.setText(internalData.applicationInfo.loadDescription(packageManager));
+        holder.itemIcon.setImageDrawable(internalData.applicationInfo.loadIcon(packageManager));
 
-        holder.cardView.setOnClickListener(new HolderOnClick(context, applicationInfo));
+        holder.switchCompat.setChecked(internalData.active);
+        holder.switchCompat.setOnClickListener(view -> internalData.active = !internalData.active);
+
+        holder.cardView.setOnClickListener(new CardViewOnClick(context, internalData.applicationInfo));
     }
 
     @Override
