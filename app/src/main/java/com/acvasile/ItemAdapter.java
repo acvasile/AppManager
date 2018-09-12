@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -58,6 +59,16 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     private Context context;
     private PackageManager packageManager;
     private List<InternalData> data;
+
+    public void forceStopSelectedPackages()
+    {
+        List<String> packages = new ArrayList<>(data.size());
+        for (InternalData internalData : data)
+        {
+            if (internalData.active) { packages.add(internalData.applicationInfo.packageName); }
+        }
+        AppManager.forceStopPackages(packages);
+    }
 
     ItemAdapter(Context mContext, List<ApplicationInfo> mData)
     {

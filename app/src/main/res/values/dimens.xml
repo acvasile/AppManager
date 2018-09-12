@@ -15,4 +15,6 @@
     <dimen name="app_image_margin">8dp</dimen>
     <dimen name="app_image_size">50dp</dimen>
 
+    <dimen name="fab_margin">16dp</dimen>
+
 </resources>

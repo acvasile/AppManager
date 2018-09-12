@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">AppManager</string>
     <string name="sample_title">Application name</string>
+    <string name="optimize_button">Optimize</string>
 </resources>
