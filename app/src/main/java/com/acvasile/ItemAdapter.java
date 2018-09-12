@@ -1,6 +1,7 @@
 package com.acvasile;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -16,10 +17,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static android.content.Context.MODE_PRIVATE;
 
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder>
@@ -70,6 +75,81 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         AppManager.forceStopPackages(packages);
     }
 
+    private Set<String> serializeInternalData()
+    {
+        Set<String> internalDataSet = new HashSet<>();
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+        {
+            internalDataSet.addAll(data.stream()
+                    .filter(internalData -> internalData.active)
+                    .map(elem -> elem.applicationInfo.packageName)
+                    .collect(Collectors.toList()));
+        }
+        else
+        {
+            for (InternalData internalData : data)
+            {
+                if (internalData.active)
+                {
+                    internalDataSet.add(internalData.applicationInfo.packageName);
+                }
+            }
+        }
+
+        return internalDataSet;
+    }
+
+    public void saveCurrentState()
+    {
+        Set<String> internalDataSet = serializeInternalData();
+        // Nothing to be saved
+        if (internalDataSet.size() == 0) { return; }
+
+        // NOTE: SharedPreferences are lost if the app is force stopped
+        SharedPreferences sharedPreferences =
+                context.getSharedPreferences(MainActivity.PREF_FILE, MODE_PRIVATE);
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putStringSet(MainActivity.PREF_VALUE, internalDataSet);
+        editor.apply();
+    }
+
+    private void restoreLastState()
+    {
+        SharedPreferences settings =
+                context.getSharedPreferences(MainActivity.PREF_FILE, MODE_PRIVATE);
+
+        Set<String> internalDataSet;
+        try
+        {
+            internalDataSet = settings.getStringSet(MainActivity.PREF_VALUE, null);
+        }
+        catch (ClassCastException ex)
+        {
+            Log.e("restoreLastState", "Could not resume state: " + ex.getMessage());
+            return;
+        }
+
+        // Set is empty
+        if (internalDataSet == null || internalDataSet.size() == 0) { return; }
+
+        // Restore the last state
+        for (InternalData internalData : data)
+        {
+            try
+            {
+                internalData.active =
+                        internalDataSet.contains(internalData.applicationInfo.packageName);
+            }
+            catch (ClassCastException ex)
+            {
+                Log.e("restoreLastState", "internalDataSet: " + ex.getMessage());
+                return;
+            }
+        }
+    }
+
     ItemAdapter(Context mContext, List<ApplicationInfo> mData)
     {
         this.context = mContext;
@@ -89,6 +169,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         }
 
         this.packageManager = context.getPackageManager();
+        restoreLastState();
     }
 
     @Override

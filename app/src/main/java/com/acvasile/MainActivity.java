@@ -10,13 +10,18 @@ import android.support.v7.widget.RecyclerView;
 
 public class MainActivity extends AppCompatActivity
 {
+    static final String PREF_FILE = "pref_file";
+    static final String PREF_VALUE = "pref_value";
+
+    private ItemAdapter itemAdapter = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ItemAdapter itemAdapter = new ItemAdapter(getApplicationContext(),
+        itemAdapter = new ItemAdapter(getApplicationContext(),
                 AppManager.getInstalledApps(getApplicationContext()));
 
         RecyclerView recyclerView = findViewById(R.id.recyclerview_id);
@@ -30,5 +35,12 @@ public class MainActivity extends AppCompatActivity
             Snackbar.make(view, "Killed selected apps", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         });
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+        if (itemAdapter != null) { itemAdapter.saveCurrentState(); }
     }
 }
