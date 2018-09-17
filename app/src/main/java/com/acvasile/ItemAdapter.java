@@ -13,12 +13,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.CursorAdapter;
 import android.widget.ImageView;
+import android.widget.SectionIndexer;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,25 +32,24 @@ import java.util.stream.Collectors;
 import static android.content.Context.MODE_PRIVATE;
 
 
-public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder>
+
+public class ItemAdapter extends BaseAdapter implements SectionIndexer
 {
-    static class ItemViewHolder extends RecyclerView.ViewHolder
+    static class ItemViewHolder
     {
         TextView primaryTitle;
         TextView secondaryTitle;
         ImageView itemIcon;
         SwitchCompat switchCompat;
-        CardView cardView;
+//        CardView cardView;
 
         ItemViewHolder(View itemView)
         {
-            super(itemView);
-
             primaryTitle = itemView.findViewById(R.id.primary_title_id);
             secondaryTitle = itemView.findViewById(R.id.secondary_title_id);
             itemIcon = itemView.findViewById(R.id.item_icon);
             switchCompat = itemView.findViewById(R.id.on_off_switch);
-            cardView = itemView.findViewById(R.id.cardview_id);
+//            cardView = itemView.findViewById(R.id.cardview_id);
         }
     }
 
@@ -64,6 +68,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     private Context context;
     private PackageManager packageManager;
     private List<InternalData> data;
+    private List<String> sections;
+    private HashMap<String, Integer> alphaIndexer;
 
     public void forceStopSelectedPackages()
     {
@@ -170,21 +176,53 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
         this.packageManager = context.getPackageManager();
         restoreLastState();
+
+        alphaIndexer = new HashMap<>();
+        int index = 0;
+        for (ApplicationInfo applicationInfo : mData)
+        {
+            String upperChar = applicationInfo.packageName.substring(0, 1).toUpperCase();
+            if (!alphaIndexer.containsKey(upperChar))
+            {
+                alphaIndexer.put(upperChar, index);
+            }
+            ++index;
+        }
+        sections = new ArrayList<>(alphaIndexer.keySet());
     }
 
     @Override
-    @NonNull
-    public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType)
+    public int getCount()
     {
-        LayoutInflater mInflater = LayoutInflater.from(context);
-        View view = mInflater.inflate(R.layout.cardview_present_app, parent,false);
-        return new ItemViewHolder(view);
+        return data.size();
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ItemViewHolder holder, int position)
+    public Object getItem(int position)
     {
-        position = holder.getAdapterPosition();
+        return data.get(position);
+    }
+
+    @Override
+    public long getItemId(int position)
+    {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent)
+    {
+        ItemViewHolder holder;
+        if (convertView == null)
+        {
+            convertView = LayoutInflater.from(context).inflate(R.layout.present_app, parent, false);
+            holder = new ItemViewHolder(convertView);
+            convertView.setTag(holder);
+        }
+        else
+        {
+            holder = (ItemViewHolder) convertView.getTag();
+        }
 
         InternalData internalData;
         try
@@ -194,9 +232,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         catch (IndexOutOfBoundsException ex)
         {
             Log.e("ItemAdaptor", "Can not obtain element at position: " + position);
-            return;
+            return null;
         }
-
         holder.primaryTitle.setText(internalData.applicationInfo.loadLabel(packageManager));
         holder.secondaryTitle.setText(internalData.applicationInfo.loadDescription(packageManager));
         holder.itemIcon.setImageDrawable(internalData.applicationInfo.loadIcon(packageManager));
@@ -204,20 +241,82 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         holder.switchCompat.setChecked(internalData.active);
         holder.switchCompat.setOnClickListener(view -> internalData.active = !internalData.active);
 
-        holder.cardView.setOnClickListener(view ->
-        {
-            AppManager.forceStopPackages(
-                    new ArrayList<>(Arrays.asList(internalData.applicationInfo.packageName)));
+//        holder.cardView.setOnClickListener(view ->
+//        {
+//            AppManager.forceStopPackages(
+//                    new ArrayList<>(Arrays.asList(internalData.applicationInfo.packageName)));
+//
+//            Log.e("HolderOnClock", "Killed: " + internalData.applicationInfo.packageName);
+//            Toast.makeText(context, "killed: " + internalData.applicationInfo.packageName,
+//                    Toast.LENGTH_LONG).show();
+//        });
 
-            Log.e("HolderOnClock", "Killed: " + internalData.applicationInfo.packageName);
-            Toast.makeText(context, "killed: " + internalData.applicationInfo.packageName,
-                    Toast.LENGTH_LONG).show();
-        });
+        return convertView;
     }
 
     @Override
-    public int getItemCount()
+    public Object[] getSections()
     {
-        return data.size();
+        return data.toArray();
     }
+
+    @Override
+    public int getPositionForSection(int sectionIndex)
+    {
+        return alphaIndexer.get(sections.get(sectionIndex));
+    }
+
+    @Override
+    public int getSectionForPosition(int position) {
+        return 0;
+    }
+
+//    @Override
+//    @NonNull
+//    public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType)
+//    {
+//        LayoutInflater mInflater = LayoutInflater.from(context);
+//        View view = mInflater.inflate(R.layout.cardview_present_app, parent,false);
+//        return new ItemViewHolder(view);
+//    }
+//
+//    @Override
+//    public void onBindViewHolder(@NonNull ItemViewHolder holder, int position)
+//    {
+//        position = holder.getAdapterPosition();
+//
+//        InternalData internalData;
+//        try
+//        {
+//            internalData = data.get(position);
+//        }
+//        catch (IndexOutOfBoundsException ex)
+//        {
+//            Log.e("ItemAdaptor", "Can not obtain element at position: " + position);
+//            return;
+//        }
+//
+//        holder.primaryTitle.setText(internalData.applicationInfo.loadLabel(packageManager));
+//        holder.secondaryTitle.setText(internalData.applicationInfo.loadDescription(packageManager));
+//        holder.itemIcon.setImageDrawable(internalData.applicationInfo.loadIcon(packageManager));
+//
+//        holder.switchCompat.setChecked(internalData.active);
+//        holder.switchCompat.setOnClickListener(view -> internalData.active = !internalData.active);
+//
+//        holder.cardView.setOnClickListener(view ->
+//        {
+//            AppManager.forceStopPackages(
+//                    new ArrayList<>(Arrays.asList(internalData.applicationInfo.packageName)));
+//
+//            Log.e("HolderOnClock", "Killed: " + internalData.applicationInfo.packageName);
+//            Toast.makeText(context, "killed: " + internalData.applicationInfo.packageName,
+//                    Toast.LENGTH_LONG).show();
+//        });
+//    }
+//
+//    @Override
+//    public int getItemCount()
+//    {
+//        return data.size();
+//    }
 }

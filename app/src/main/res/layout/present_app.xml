@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_height="@dimen/item_height"
+        android:layout_margin="@dimen/item_margin"
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:theme="@style/Theme.AppCompat">
+
+        <ImageView
+            android:id="@+id/item_icon"
+            android:contentDescription="@string/sample_title"
+            android:layout_width="@dimen/app_image_size"
+            android:layout_height="@dimen/app_image_size"
+            android:layout_margin="@dimen/app_image_margin"
+            android:scaleType="fitCenter" />
+
+        <LinearLayout
+            android:layout_width="@dimen/app_title_max_width"
+            android:maxWidth="@dimen/app_title_max_width"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- Improve text compatibility by using start margin -->
+            <TextView
+                android:id="@+id/primary_title_id"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/app_title_height"
+                android:layout_marginStart="@dimen/app_title_left_margin"
+                android:layout_marginLeft="@dimen/app_title_left_margin"
+                android:gravity="center|start|bottom"
+                android:text="@string/sample_title"
+                android:textColor="@color/primaryTextColor"
+                android:textStyle="bold"
+                android:textSize="@dimen/app_title_font_size" />
+
+            <TextView
+                android:id="@+id/secondary_title_id"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="@dimen/app_title_left_margin"
+                android:layout_marginStart="@dimen/app_title_left_margin"
+                android:gravity="center|start|top"
+                android:text="@string/sample_title"
+                android:textColor="@color/secondaryTextColor"
+                android:textSize="@dimen/app_secondary_font_size" />
+        </LinearLayout>
+
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/on_off_switch"
+            android:textOn="On"
+            android:textOff="Off"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/app_image_margin" />
+
+    </LinearLayout>
+
+</android.support.constraint.ConstraintLayout>

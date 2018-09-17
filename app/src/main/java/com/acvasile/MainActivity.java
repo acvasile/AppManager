@@ -6,6 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.widget.ListView;
+
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity
@@ -24,8 +27,9 @@ public class MainActivity extends AppCompatActivity
         itemAdapter = new ItemAdapter(getApplicationContext(),
                 AppManager.getInstalledApps(getApplicationContext()));
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerview_id);
-        recyclerView.setLayoutManager(new GridLayoutManager(getApplicationContext(),1));
+        ListView recyclerView = findViewById(R.id.list_view);
+        recyclerView.setFastScrollEnabled(true);
+//        recyclerView.setLayoutManager(new GridLayoutManager(getApplicationContext(),1));
         recyclerView.setAdapter(itemAdapter);
 
         FloatingActionButton fab = findViewById(R.id.fab);
