@@ -5,24 +5,17 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,7 +23,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static android.content.Context.MODE_PRIVATE;
-
 
 
 public class ItemAdapter extends BaseAdapter implements SectionIndexer
@@ -41,7 +33,6 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
         TextView secondaryTitle;
         ImageView itemIcon;
         SwitchCompat switchCompat;
-//        CardView cardView;
 
         ItemViewHolder(View itemView)
         {
@@ -49,26 +40,35 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
             secondaryTitle = itemView.findViewById(R.id.secondary_title_id);
             itemIcon = itemView.findViewById(R.id.item_icon);
             switchCompat = itemView.findViewById(R.id.on_off_switch);
-//            cardView = itemView.findViewById(R.id.cardview_id);
         }
     }
 
     private class InternalData
     {
         ApplicationInfo applicationInfo;
+        String indexSelection;
         boolean active;
 
         InternalData(ApplicationInfo applicationInfo, boolean active)
         {
             this.applicationInfo = applicationInfo;
             this.active = active;
+
+            if (this.applicationInfo.packageName.length() > 0)
+            {
+                this.indexSelection = this.applicationInfo
+                        .packageName.substring(0, 1);
+            }
+            else
+            {
+                this.indexSelection = "";
+            }
         }
     }
 
     private Context context;
     private PackageManager packageManager;
     private List<InternalData> data;
-    private List<String> sections;
     private HashMap<String, Integer> alphaIndexer;
 
     public void forceStopSelectedPackages()
@@ -160,35 +160,23 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
     {
         this.context = mContext;
 
-        data = new ArrayList<>(mData.size());
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+        this.alphaIndexer = new HashMap<>();
+
+        this.data = new ArrayList<>(mData.size());
+        int index = 0;
+        for (ApplicationInfo applicationInfo : mData)
         {
-            mData.forEach(applicationInfo ->
-                    data.add(new InternalData(applicationInfo, false)));
-        }
-        else
-        {
-            for (ApplicationInfo applicationInfo : mData)
+            InternalData internalData = new InternalData(applicationInfo, false);
+            this.data.add(new InternalData(applicationInfo, false));
+            if (!this.alphaIndexer.containsKey(internalData.indexSelection))
             {
-                data.add(new InternalData(applicationInfo, false));
+                this.alphaIndexer.put(internalData.indexSelection, index);
             }
+            ++index;
         }
 
         this.packageManager = context.getPackageManager();
         restoreLastState();
-
-        alphaIndexer = new HashMap<>();
-        int index = 0;
-        for (ApplicationInfo applicationInfo : mData)
-        {
-            String upperChar = applicationInfo.packageName.substring(0, 1).toUpperCase();
-            if (!alphaIndexer.containsKey(upperChar))
-            {
-                alphaIndexer.put(upperChar, index);
-            }
-            ++index;
-        }
-        sections = new ArrayList<>(alphaIndexer.keySet());
     }
 
     @Override
@@ -215,7 +203,8 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
         ItemViewHolder holder;
         if (convertView == null)
         {
-            convertView = LayoutInflater.from(context).inflate(R.layout.present_app, parent, false);
+            convertView = LayoutInflater.from(context).inflate(R.layout.present_app,
+                    parent, false);
             holder = new ItemViewHolder(convertView);
             convertView.setTag(holder);
         }
@@ -240,17 +229,6 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
 
         holder.switchCompat.setChecked(internalData.active);
         holder.switchCompat.setOnClickListener(view -> internalData.active = !internalData.active);
-
-//        holder.cardView.setOnClickListener(view ->
-//        {
-//            AppManager.forceStopPackages(
-//                    new ArrayList<>(Arrays.asList(internalData.applicationInfo.packageName)));
-//
-//            Log.e("HolderOnClock", "Killed: " + internalData.applicationInfo.packageName);
-//            Toast.makeText(context, "killed: " + internalData.applicationInfo.packageName,
-//                    Toast.LENGTH_LONG).show();
-//        });
-
         return convertView;
     }
 
@@ -263,60 +241,12 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
     @Override
     public int getPositionForSection(int sectionIndex)
     {
-        return alphaIndexer.get(sections.get(sectionIndex));
+        return alphaIndexer.get(data.get(sectionIndex).indexSelection);
     }
 
     @Override
-    public int getSectionForPosition(int position) {
+    public int getSectionForPosition(int position)
+    {
         return 0;
     }
-
-//    @Override
-//    @NonNull
-//    public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType)
-//    {
-//        LayoutInflater mInflater = LayoutInflater.from(context);
-//        View view = mInflater.inflate(R.layout.cardview_present_app, parent,false);
-//        return new ItemViewHolder(view);
-//    }
-//
-//    @Override
-//    public void onBindViewHolder(@NonNull ItemViewHolder holder, int position)
-//    {
-//        position = holder.getAdapterPosition();
-//
-//        InternalData internalData;
-//        try
-//        {
-//            internalData = data.get(position);
-//        }
-//        catch (IndexOutOfBoundsException ex)
-//        {
-//            Log.e("ItemAdaptor", "Can not obtain element at position: " + position);
-//            return;
-//        }
-//
-//        holder.primaryTitle.setText(internalData.applicationInfo.loadLabel(packageManager));
-//        holder.secondaryTitle.setText(internalData.applicationInfo.loadDescription(packageManager));
-//        holder.itemIcon.setImageDrawable(internalData.applicationInfo.loadIcon(packageManager));
-//
-//        holder.switchCompat.setChecked(internalData.active);
-//        holder.switchCompat.setOnClickListener(view -> internalData.active = !internalData.active);
-//
-//        holder.cardView.setOnClickListener(view ->
-//        {
-//            AppManager.forceStopPackages(
-//                    new ArrayList<>(Arrays.asList(internalData.applicationInfo.packageName)));
-//
-//            Log.e("HolderOnClock", "Killed: " + internalData.applicationInfo.packageName);
-//            Toast.makeText(context, "killed: " + internalData.applicationInfo.packageName,
-//                    Toast.LENGTH_LONG).show();
-//        });
-//    }
-//
-//    @Override
-//    public int getItemCount()
-//    {
-//        return data.size();
-//    }
 }
