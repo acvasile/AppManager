@@ -16,6 +16,7 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,29 +47,19 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
     private class InternalData
     {
         ApplicationInfo applicationInfo;
-        String indexSelection;
         boolean active;
 
         InternalData(ApplicationInfo applicationInfo, boolean active)
         {
             this.applicationInfo = applicationInfo;
             this.active = active;
-
-            if (this.applicationInfo.packageName.length() > 0)
-            {
-                this.indexSelection = this.applicationInfo
-                        .packageName.substring(0, 1);
-            }
-            else
-            {
-                this.indexSelection = "";
-            }
         }
     }
 
     private Context context;
     private PackageManager packageManager;
     private List<InternalData> data;
+    private List<String> selections;
     private HashMap<String, Integer> alphaIndexer;
 
     public void forceStopSelectedPackages()
@@ -158,24 +149,33 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
 
     ItemAdapter(Context mContext, List<ApplicationInfo> mData)
     {
-        this.context = mContext;
+        context = mContext;
 
-        this.alphaIndexer = new HashMap<>();
+        alphaIndexer = new HashMap<>();
+        data = new ArrayList<>(mData.size());
+        packageManager = context.getPackageManager();
 
-        this.data = new ArrayList<>(mData.size());
         int index = 0;
         for (ApplicationInfo applicationInfo : mData)
         {
-            InternalData internalData = new InternalData(applicationInfo, false);
-            this.data.add(new InternalData(applicationInfo, false));
-            if (!this.alphaIndexer.containsKey(internalData.indexSelection))
+            data.add(new InternalData(applicationInfo, false));
+
+            CharSequence label = applicationInfo.loadLabel(packageManager);
+            if (label != null && label.length() > 0)
             {
-                this.alphaIndexer.put(internalData.indexSelection, index);
+                String selectionChar = label.toString()
+                        .substring(0, 1).toUpperCase();
+                if (!alphaIndexer.containsKey(selectionChar))
+                {
+                    alphaIndexer.put(selectionChar, index);
+                }
             }
             ++index;
         }
 
-        this.packageManager = context.getPackageManager();
+        selections = new ArrayList<>(alphaIndexer.keySet());
+        Collections.sort(selections);
+
         restoreLastState();
     }
 
@@ -235,13 +235,13 @@ public class ItemAdapter extends BaseAdapter implements SectionIndexer
     @Override
     public Object[] getSections()
     {
-        return data.toArray();
+        return selections.toArray();
     }
 
     @Override
     public int getPositionForSection(int sectionIndex)
     {
-        return alphaIndexer.get(data.get(sectionIndex).indexSelection);
+        return alphaIndexer.get(selections.get(sectionIndex));
     }
 
     @Override

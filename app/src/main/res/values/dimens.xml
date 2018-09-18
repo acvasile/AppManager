@@ -9,7 +9,7 @@
     <dimen name="app_title_height">30dp</dimen>
     <dimen name="app_title_left_margin">1dp</dimen>
     <dimen name="app_title_font_size">15sp</dimen>
-    <dimen name="app_title_max_width">250dp</dimen>
+    <dimen name="app_title_max_width">220dp</dimen>
     <dimen name="app_secondary_font_size">14sp</dimen>
 
     <dimen name="app_image_margin">8dp</dimen>
